@@ -1,0 +1,231 @@
+---
+title: "Accuracy on on initial train set after splitting into train1 and test1.1"
+author: "Varsha   Waingankar"
+date: "November 24, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+train_df = read.csv("train1.csv")
+test_df = read.csv("test1.1.csv")
+hist(train_df$TotalBsmtSF+train_df$FFlrSF+train_df$SFlrSF, col=c('blue'))
+shapiro.test(train_df$TotalBsmtSF+train_df$FFlrSF+train_df$SFlrSF)
+
+qqnorm(train_df$TotalBsmtSF+train_df$FFlrSF+train_df$SFlrSF)
+qqline(train_df$TotalBsmtSF+train_df$FFlrSF+train_df$SFlrSF)
+
+hist(test_df$TotalBsmtSF+test_df$FFlrSF+test_df$SFlrSF, col=c('red'))
+shapiro.test(test_df$TotalBsmtSF+test_df$FFlrSF+test_df$SFlrSF)
+
+qqnorm(test_df$TotalBsmtSF+test_df$FFlrSF+test_df$SFlrSF)
+qqline(test_df$TotalBsmtSF+test_df$FFlrSF+test_df$SFlrSF)
+
+hist(train_df$YearBuilt, col=c('purple'))
+qqnorm(train_df$YearBuilt)
+qqline(train_df$YearBuilt)
+
+hist(train_df$OverallQual, col =('green'))
+qqnorm(train_df$OverallQual)
+qqline(train_df$OverallQual)
+
+
+hist(train_df$GarageArea, col =('brown'))
+qqnorm(train_df$GarageArea)
+qqline(train_df$GarageArea)
+
+plot(density(log(train_df$GarageArea)))
+
+#Linear model to check for significance of paramaters affecting sale price
+
+model_one = lm(train_df$SalePrice~train_df$OverallQual+train_df$OverallCond)
+plot(model_one)
+summary(model_one)
+
+
+model_two = lm(train_df$SalePrice~train_df$YearRemodAdd+train_df$YearBuilt+train_df$YrSold)
+plot(model_two)
+summary(model_two)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+train_df = data.frame(read.csv("train1.csv"))
+test_df = data.frame(read.csv("test1.1.csv"))
+head(train_df)
+
+cor(train_df$TotalBsmtSF+train_df$FFlrSF+train_df$SFlrSF+train_df$YearRemodAdd+train_df$YearBuilt+train_df$YrSold+train_df$WoodDeckSF+train_df$GarageArea+train_df$PoolArea, train_df$SalePrice , use="complete")
+
+
+fit <- lm(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = train_df)
+summary(fit)
+
+
+fitt <- lm(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = test_df)
+summary(fitt)
+
+
+## Using K- Nearest Neighbors to predict the value of sale price.  Accuracy is 86 percent
+library(caret)
+library(ggplot2)
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+set.seed(3333)
+knn_fit <- train(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = train_df, method = "knn", trControl=trctrl, preProcess = c("center", "scale"), tuneLength = 10)
+
+ test_pred <- predict(knn_fit, newdata = test_df)
+ summary(test_pred)
+ 
+ knn_fit
+plot(knn_fit)
+ #Printing the cost prediction on the test data file to a file named test_pred.txt
+ 
+write.table(test_pred,file="tpredict1.txt", sep="\n",row.names= TRUE,col.names=NA)
+
+
+
+
+write.table(test_pred, file="tpredict3.csv")
+ 
+plot(test_df$SalePrice,test_df$Predicted_Sale_Price, col="blue",pch=16)
+ggplot(data = test_df, aes(x=SalePrice, y=Predicted_Sale_Price)) + geom_line(aes(colour="red"))
+
+plot(test_df$SalePrice, test_df$Predicted_Sale_Price, type="b", pch=19, col="red", xlab="SalePrice", ylab="Predicted_Sale_Price")
+
+
+hist(test_df$SalePrice , col="green")
+hist(test_df$Predicted_Sale_Price, col="blue")
+# Checking for the accuracy using Adjusted R square / checking the percentage
+model = lm(test_df$Predicted_Sale_Price~test_df$SalePrice)
+plot(model)
+summary(model)
+
+s = mean(test_df$Diff_a_p)
+s
+m1 =lm(Predicted_Sale_Price~TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data= test_df)
+plot(m1)
+summary(m1)
+
+acc=sum(test_df$SalePrice)/sum(test_df$Predicted_Sale_Price)
+acc
+
+table(test_df$SalePrice)
+
+a <- round(prop.table(table(test_df$SalePrice,test_df$Predicted_Sale_Price)) * 100, digits = 1)
+
+
+```
+# Decision Tress to predict the value , accuracy is 75 percent
+```{r}
+
+#install.packages("rpart")
+#install.packages("rpart.plot")
+library("rpart")
+library("rpart.plot")
+data("train_df")
+indexes = sample(150, 110)
+#iris_train = iris[indexes,]
+#iris_test = iris[-indexes,]
+
+#Decision trees to predict the sale price
+target = train_df$SalePrice ~train_df$TotalBsmtSF +train_df$FFlrSF+ train_df$SFlrSF+train_df$YearRemodAdd+train_df$YearBuilt+train_df$YrSold+train_df$WoodDeckSF+train_df$GarageArea+train_df$PoolArea
+
+
+tree = rpart(target, data = train_df, method = "class")
+rpart.plot(tree)
+#install.packages("party")
+library(party)
+tree = ctree(SalePrice ~ TotalBsmtSF +FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = test_df)
+plot(tree, main="Conditional Inference Tree for Housing data")
+
+
+conf = table(predict(tree), test_df$SalePrice)
+
+ treeop = predict(tree)
+
+
+write.table(treeop, file="output_price.csv")
+
+
+summary(tree)
+#install.packages("C50")
+library(C50)
+
+
+
+moddt = lm(Dt_pred_price~TotalBsmtSF +FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data=test_df)
+plot(moddt)
+summary(moddt)
+
+```
+
+## RandomForest method to predict the values. Accuracy is 65 percent
+
+You can also embed plots, for example:
+
+```{r}
+library(party)
+library(randomForest)
+test_df = read.csv("test1.1.csv")
+
+
+fit_model <- randomForest(as.factor(SalePrice) ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea,
+                      data=train_df, 
+                      importance=TRUE, 
+                      ntree=200)
+
+Prediction <- predict(fit_model, test_df)
+ submit <- data.frame(Id = test_df$Id, SalePrice = Prediction)
+ write.csv(submit, file = "firstforest.csv", row.names = FALSE)
+
+ 
+ modacc = lm(RF_Pred_SP~TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+GarageArea,    data=test_df)
+ 
+ plot(modacc)
+ summary(modacc)
+ 
+
+ 
+```
+ 
+ 
+```{r}
+ fit_model1 <- lm(House$SalePrice ~ House$TotalBsmtSF+House$FFlrSF+House$SFlrSF)
+summary(fit_model1) # display results
+confint(fit_model1) # 95% CI for the coefficients
+exp(coef(fit_model1)) # exponentiated coefficients
+exp(confint(fit_model1)) # 95% CI for exponentiated coefficients
+p =predict(fit_model1, type="response") # predicted values
+r =residuals(fit_model1, type="deviance") # r
+ write.table(p,"values.csv")
+```
+```{r}
+
+#TRYING LINEAR REGRESSION TO PREDICT THE SALE PRICE ACCURACY IS VERY LOW
+
+lm1 =lm(SalePrice~TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data= train_df)
+predict = predict.lm(lm1, data=test_df)
+print(predict)
+summary(m1)
+write.table(predict, "lmmodel.csv")
+
+test_df= read.csv("test1.1.csv")
+
+lm2 = lm(Linear_SP~TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data= test_df)
+summary(lm2)
+
+min(test_df$Predicted_Sale_Price)
+max(test_df$Predicted_Sale_Price)
+
+```
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

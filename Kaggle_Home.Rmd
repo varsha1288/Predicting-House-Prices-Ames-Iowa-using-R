@@ -1,0 +1,529 @@
+---
+title: "Housing_Price"
+author: "Varsha waingankar"
+date: "November 14, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#Initial statistics variables exploration with histogram boxplot
+House <- read.csv("train.csv")
+Test <- read.csv("test.csv")
+
+fitting <- lm(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = House)
+summary(fitting)
+
+head(House)
+hist(House$TotalBsmtSF , col =c('yellow'))
+boxplot(House$TotalBsmtSF , col =c('yellow'))
+shapiro.test(House$TotalBsmtSF)
+qqnorm(House$TotalBsmtSF)
+qqline(House$TotalBsmtSF)
+
+
+plot(House$TotalBsmtSF)
+plot(density(House$TotalBsmtSF), col=c('red'))
+plot(density(log(House$TotalBsmtSF)),col = c('red'))
+plot(density(sqrt(House$TotalBsmtSF)), col= c('red'))
+
+hist(House$FFlrSF)
+hist(House$FFlrSF, col =c('green'))
+boxplot(House$FFlrSF , col =c('green'))
+shapiro.test(House$FFlrSF)
+qqnorm(House$FFlrSF)
+qqline(House$FFlrSF)
+
+hist(House$SFlrSF)
+hist(House$SFlrSF, col =c('blue'))
+boxplot(House$SFlrSF, col =c('blue'))
+shapiro.test(House$SFlrSF)
+qqnorm(House$SFlrSF)
+qqline(House$SFlrSF)
+
+hist(House$SalePrice ,col =c('red'))
+shapiro.test(House$SalePrice)
+qqnorm(House$SalePrice)
+qqline(House$SalePrice)
+
+#Depicting the relation between neighborhoot and sale price
+plot(House$Neighborhood,House$SalePrice,col= c('pink'))
+
+#Depicting the relationship between finishes upgrade and sale price
+plot(House$FullBath, House$SalePrice, col =c('blue'))
+plot(House$CentralAir, House$SalePrice, col =c('red'))
+
+
+lm_house =lm(SalePrice~YearRemodAdd, data=House)
+
+plot(lm_house$fitted.values,lm_house$residuals, xlab="fitted values", ylab="residuals")
+qqnorm(lm_house$residuals, ylab="residuals")
+
+```
+
+```{r}
+#Mean and deviations
+mean.saleprice = mean(House$SalePrice)
+sd.saleprice = mean(House$SalePrice)
+
+mean.firstflr = mean(House$FFlrSF)
+sd.firstflr = sd(House$FFlrSF)
+
+
+mean.sflr = mean(House$SFlrSF)
+sd.sflr = sd(House$SFlrSF)
+
+mean.bsmtflr = mean(House$TotalBsmtSF)
+sd.bsmtflr = sd(House$TotalBsmtSF)
+
+mean.saleprice
+sd.saleprice
+mean.firstflr
+sd.firstflr
+mean.sflr
+sd.sflr
+mean.bsmtflr
+sd.bsmtflr
+```
+
+```{r}
+#Using the t test function to  get confidence intervals with z score 
+t.test(House$SalePrice)
+t.test(House$TotalBsmtSF,ci =.99)
+t.test(House$FFlrSF)
+t.test(House$SFlrSF)
+```
+
+```{r}
+#Find the range of the variables using confidence intervals and z score
+print("Sale price z score")
+qnorm(.975)
+
+n <- length(House$SalePrice)
+n
+std.error <- qnorm(.975)*sd.saleprice/sqrt(n)
+std.error
+lower.limit <- mean.saleprice-std.error
+upper.limit <- mean.saleprice +std.error
+lower.limit
+upper.limit
+
+
+
+print("first floor square foot")
+
+qnorm(.975)
+
+n <- length(House$FFlrSF)
+n
+std.error <- qnorm(.975)*sd.firstflr/sqrt(n)
+std.error
+lower.limit <- mean.firstflr-std.error
+upper.limit <- mean.firstflr+std.error
+lower.limit
+upper.limit
+
+print("second floor z score")
+qnorm(.975)
+
+n <- length(House$SFlrSF)
+n
+std.error <- qnorm(.975)*sd.sflr/sqrt(n)
+std.error
+lower.limit <- mean.sflr-std.error
+upper.limit <- mean.sflr+std.error
+lower.limit
+upper.limit
+
+
+print("basement square footage")
+
+qnorm(.975)
+
+n <- length(House$TotalBsmtSF)
+n
+std.error <- qnorm(.975)*sd.bsmtflr/sqrt(n)
+std.error
+lower.limit <- mean.bsmtflr-std.error
+upper.limit <- mean.bsmtflr+std.error
+lower.limit
+upper.limit
+
+```
+
+
+
+```{r}
+#Finding the correlation coefficient
+House = read.csv("train.csv")
+cor(House$TotalBsmtSF, House$SalePrice, use ="complete")
+cor(House$FFlrSF, House$SalePrice, use="complete")
+cor(House$SFlrSF, House$SalePrice, use="complete")
+
+
+
+cor((House$TotalBsmtSF+House$FFlrSF+House$SFlrSF), House$SalePrice , use="complete")
+cor(House$Fireplaces, House$SalePrice, use= "complete")
+
+dml <- loess( House$SalePrice~House$Fireplaces)
+plot(House$Fireplaces, House$SalePrice)
+lines(predict(dml), col='blue', lwd=2)
+scatter.smooth(House$SalePrice,House$Fireplaces, family = "gaussian", col=c('red'))
+
+dml <- loess( House$SalePrice~House$TotalBsmtSF+House$FFlrSF+House$SFlrSF)
+plot(House$TotalBsmtSF+House$FFlrSF+House$SFlrSF, House$SalePrice)
+lines(predict(dml), col='blue', lwd=2)
+scatter.smooth(House$SalePrice,House$TotalBsmtSF+House$FFlrSF+House$SFlrSF, family = "gaussian", col=c('red'))
+
+
+
+cor(House$GarageArea, House$SalePrice, use="complete")
+
+dml <- loess( House$SalePrice~House$GarageArea)
+plot(House$GarageArea, House$SalePrice)
+lines(predict(dml), col='blue', lwd=2)
+scatter.smooth(House$SalePrice,House$GarageArea, family = "gaussian", col=c('yellow'))
+
+
+
+
+
+
+
+cor(House$YearBuilt, House$SalePrice, use="complete")
+
+dml <- loess( House$SalePrice~House$YearBuilt)
+plot(House$YearBuilt, House$SalePrice)
+lines(predict(dml), col='blue', lwd=2)
+scatter.smooth(House$SalePrice,House$YearBuilt, family = "gaussian", col=c('purple'))
+
+
+
+
+
+cor(House$OverallQual, House$SalePrice, use="complete")
+
+
+dml <- loess( House$SalePrice~House$OverallQual)
+plot(House$OverallQual, House$SalePrice)
+lines(predict(dml), col='blue', lwd=2)
+scatter.smooth(House$SalePrice,House$OverallQual, family = "gaussian", col=c('green'))
+
+
+
+
+
+cor(House$GrLivArea, House$SalePrice, use="complete")
+
+cor(House$YearRemodAdd, House$SalePrice, use="complete")
+#Finding the highest correlation between the variables, affecting the saleprice 
+cor(House$TotalBsmtSF+House$FFlrSF+House$SFlrSF+House$YearRemodAdd+House$YearBuilt+House$YrSold+House$WoodDeckSF+House$GarageArea+House$PoolArea+House$Fireplaces, House$SalePrice , use="complete")
+
+model1 = lm(House$SalePrice~House$TotalBsmtSF+House$FFlrSF+House$SFlrSF+House$YearRemodAdd+House$YearBuilt+House$YrSold+House$WoodDeckSF+House$GarageArea+House$PoolArea)
+plot(model1)
+summary(model1)
+
+
+pairs(House$SalePrice~House$TotalBsmtSF+House$FFlrSF+House$SFlrSF+House$YearRemodAdd+House$YearBuilt+House$YrSold+House$WoodDeckSF+House$GarageArea+House$PoolArea , 
+   main="Simple Scatterplot Matrix")
+plot(  House$TotalBsmtSF,House$SalePrice)
+
+abline(lm(House$SalePrice~House$TotalBsmtSF), col="red") # regression line (y~x) 
+lines(lowess(House$SalePrice,House$TotalBsmtSF), col="blue") # lowess line (x,y)
+
+model_sale <- lm(SalePrice~TotalBsmtSF+FFlrSF+SFlrSF, data=House)
+unseen <- data.frame(TotalBsmtSF=2000,FFlrSF=1000, SFlrSF=500)
+predict(model_sale, unseen)
+#finding the fit
+summary(model_sale)
+```
+
+
+```{r}
+#How Sale price fluctutates over year
+qqplot(House$YearBuilt+House$YearRemodAdd, House$SalePrice)
+qqplot(House$YrSold, House$SalePrice)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+
+
+
+
+
+
+```{r}
+fit1 <- lm(House$SalePrice ~ House$TotalBsmtSF+House$FFlrSF+House$SFlrSF)
+summary(fit1) # display results
+confint(fit1) # 95% CI for the coefficients
+exp(coef(fit1)) # exponentiated coefficients
+exp(confint(fit1)) # 95% CI for exponentiated coefficients
+predict(fit1, type="response") # predicted values
+residuals(fit1, type="deviance") # r
+```
+
+```{r}
+House= read.csv("train.csv")
+testing = read.csv("test.csv")
+training =read.csv("train.csv")
+fit <- glm(House$SalePrice ~ House$TotalBsmtSF+House$FFlrSF+House$SFlrSF, family=poisson())
+prediction<- predict(fit,data= testing)
+output <- cbind(testing, prediction)
+output
+summary(fit) 
+
+```
+
+```{r}
+
+
+
+
+
+```
+
+```{r}
+#Predictive modeling to output the sale prices of homes in the test data set
+#Knn method
+#Install all packages when you run on your machine in case of errors
+library(caret)
+training =read.csv("train.csv")
+testing = read.csv("test.csv")
+trctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+set.seed(3333)
+knn_fit <- train(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea
+, data = training, method = "knn", trControl=trctrl, preProcess = c("center", "scale"), tuneLength = 10)
+
+ test_pred <- predict(knn_fit, newdata = testing)
+ #test_pred
+ #Printing the cost prediction on the test data file to a file named test_pred.txt
+ 
+#write.table(test_pred,file="test_pred.txt", sep="\n",row.names= TRUE,col.names=NA)
+write.table(test_pred, file="test_prediction.csv")
+ plot(test_pred)
+ 
+ 
+ testfile= read.csv("train.csv")
+ mn= lm(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data=testfile)
+ summary(mn)
+```
+
+```{r}
+ 
+ library(party)
+library(randomForest)
+accuracy = lm(test_df$Predicted_Sale_Price~test_df$SalePrice)
+
+fit_model <- randomForest(as.factor(SalePrice) ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea,
+                      data=training, 
+                      importance=TRUE, 
+                      ntree=2000)
+
+Prediction <- predict(fit_model, testing)
+ submit <- data.frame(Id = testing$Id, SalePrice = Prediction)
+ write.csv(submit, file = "firstforestfinal.csv", row.names = FALSE)
+
+ 
+ acc_RF =lm(test_df$RF_Pred_SP~test_df$SalePrice)
+ summary(acc_RF)
+ 
+ modacc = lm(RF_Pred_SP~TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data=testing)
+ summary(modacc)
+ 
+
+ 
+```
+ 
+ 
+
+
+```{r}
+
+library(gridExtra)
+library(scales)
+library(corrplot)
+library(dplyr)
+library(ggplot2)
+
+library(grid)
+
+House = read.csv("train.csv")
+House$MSSubClass <- as.factor(House$MSSubClass)
+House$BsmtFullBath <- as.factor(House$BsmtFullBath)
+House$BsmtHalfBath <- as.factor(House$BsmtHalfBath)
+House$HalfBath <- as.factor(House$HalfBath)
+House$FullBath <- as.factor(House$FullBath)
+House$KitchenAbvGr <- as.factor(House$KitchenAbvGr)
+House$MoSold <- as.factor(House$MoSold)
+House$YrSold <- as.factor(House$YrSold)
+House$Fireplaces <- as.factor(House$Fireplaces)
+House$GarageCars <-as.factor(House$GarageCars)
+
+
+ggplot(data=House, aes(x=SalePrice)) + 
+    geom_histogram(color='black', alpha=0.7, fill='yellow') +
+    scale_x_continuous(label=dollar) +
+    labs(title='Distribution of Sale Price', y='')
+
+# Mean sale price by Neighborhood
+House%>% group_by(nbrhd=Neighborhood) %>%
+    summarize(mean_price=mean(SalePrice)) %>%
+    arrange(desc(mean_price)) %>%
+    ggplot(aes(x=reorder(nbrhd, -mean_price), y=mean_price)) + 
+    geom_bar(stat='identity', fill='green', alpha=0.6) +
+    labs(title='Average Sale Price by Neighborhood', x='', y='') +
+    scale_y_continuous(label=dollar) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+ggplot(House, aes(x=Neighborhood, y=SalePrice)) +
+    geom_jitter(color='red', width=0.7) +
+    geom_violin(fill='purple', alpha=0.6) +
+    ggtitle('Distribution of Sale Price by Neighborhood') +
+    scale_y_continuous(label=dollar) + 
+    theme(axis.text.x=element_text(angle=42, hjust=1))
+
+
+ggplot(House, aes(x=SaleType, y=SalePrice)) +
+    geom_jitter(color='orange') +
+    geom_violin(fill='pink', alpha=0.6) +
+    ggtitle('Distribution of Sale Price by Sale Type') +
+    scale_y_continuous(label=dollar) + 
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+
+ggplot(House, aes(x=as.factor(YearBuilt), y=SalePrice)) + 
+    geom_boxplot()+
+    ggtitle('Distribution of Sale Price by Year Built') +
+    scale_y_continuous(label=dollar) +
+    scale_x_discrete(breaks=seq(1872, 2010, 2)) +
+    theme(axis.text.x=element_text(angle=45, hjust=1))
+
+
+
+#Checking for price of home, how is the value affected with Airport being close
+House$nearAP <- as.factor(House$Condition1 == 'APn' | 
+                House$Condition1 == 'APne' |
+                train$Condition2 == 'APn' |
+                train$Condition2 == 'APNe')
+
+House$adjRR <-  as.factor(House$Condition1 == 'APAn' | 
+                House$Condition1 == 'APAe' |
+                House$Condition2 == 'APAn' |
+                House$Condition2 == 'APAe')
+
+nearAP <- ggplot(House, aes(x=nearAP, y=SalePrice)) + 
+    geom_jitter(color='darkgrey') + 
+    geom_boxplot(color='steelblue', alpha=0.6) + 
+    scale_y_continuous(label=dollar) +
+    labs(title='House near Airport', x='')
+
+adjAP <- ggplot(House, aes(x=adjRR, y=SalePrice)) + 
+    geom_jitter(color='darkgrey') + 
+    geom_boxplot(color='steelblue', alpha=0.6) +
+    scale_y_continuous(label=dollar) +
+    labs(title='House Adjacent to Airport', x='')
+
+grid.arrange(nearAP, adjAP)
+
+
+#How sales varied overtime considering recession in 2008
+
+series <- House %>% 
+    group_by(year=as.factor(YrSold), month=as.factor(MoSold)) %>% 
+    summarize(mean=mean(SalePrice), volume=n()) %>%
+    mutate(date=as.Date(paste("1", month, year, sep="/"), format="%d/%m/%Y"))
+
+
+price_time <- ggplot(series, aes(x=date, y=mean)) +
+    geom_line(color='blue', size=1) +
+    scale_y_continuous(label=dollar) +
+    ylab('') +
+    xlab('') +
+    ggtitle('Mean Sale Price')
+
+vol_time <- ggplot(series, aes(x=date, y=volume,col='yellow')) + 
+    geom_bar(stat='identity', col='yellow') +
+    xlab('')+
+    ggtitle('Sales Volume')
+
+grid.newpage()
+grid.draw(rbind(ggplotGrob(price_time), ggplotGrob(vol_time), size = "last"))
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+House <- read.csv("train.csv")
+
+model1 <- lm(log(SalePrice) ~log(FFlrSF+SFlrSF+TotalBsmtSF), data=House)
+House[which(House$TotalBsmtSF==0 & House$FFlrSF==0 &House$SFlrSF==0),]
+House <- House[which(House$TotalBsmtSF>0 & House$FFlrSF>0 & House$SFlrSF>0 & House$LotArea >0 ),]
+model1 <- lm(log(SalePrice)~log(FFlrSF+SFlrSF+TotalBsmtSF), data=House)
+summary(model1)
+
+
+plot(log(House$FFlrSF+House$SFlrSF+House$TotalBsmtSF), log(House$SalePrice))
+abline(model1, col="red", lwd=2)
+plot(resid(model1))
+
+
+model2 <- lm(log(SalePrice)~0+log(FFlrSF+SFlrSF+TotalBsmtSF)+log(LotArea) +factor(Neighborhood), data=House)
+summary(model2)
+
+plot(0+log(House$FFlrSF+House$SFlrSF+House$TotalBsmtSF)+log(House$LotArea) ~log(House$SalePrice))
+abline(model2, col="red", lwd=2)
+plot(resid(model2))
+
+```
+
+```{r}
+library(gdata)
+#library(geoplot)
+library(class)
+
+ht <- read.csv("train.csv",stringsAsFactors=FALSE)
+head(ht)
+summary(ht)
+names(ht) <- tolower(names(ht))
+ht$saleprice.n <- as.numeric(gsub("[^[:digit:]]", "", ht$saleprice))
+sum(is.na(ht$saleprice.n))
+sum(ht$saleprice.n==0)
+
+
+names(ht) <- tolower(names(ht))
+ht$totalbsmtsf.n <- as.numeric(gsub("[^[digit:]]","", ht$totalbsmts))
+ht$fflrsf.n <- as.numeric(gsub("[^[digit:]]","",ht$fflrsf))
+ht$sflrsf.n <- as.numeric(gsub("[^[digit:]]","",ht$sflrsf))
+ht$lotarea.n <- as.numeric(gsub("[^[digit:]]","",ht$lotarea))
+
+ht$yrsold.n <-as.numeric(as.character(ht$yrsold)) 
+ht$yearbuilt.n <-as.numeric(as.character(ht$yearbuilt))
+ht$yearremodadd.n <- as.numeric(as.character(ht$yearremodadd))
+
+```
+```{r}
+test = read.csv("test.csv")
+fitting1 <- lm(SalePrice ~ TotalBsmtSF+FFlrSF+SFlrSF+YearRemodAdd+YearBuilt+YrSold+WoodDeckSF+GarageArea+PoolArea, data = test)
+summary(fitting1)
+```
+
+```{r}
+
+
+```
